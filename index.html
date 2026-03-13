@@ -146,7 +146,14 @@
 
 <script>
   const REFLECT_API = 'https://reflect.qsc.com/api/public/v0';
-  const PROXY       = 'https://corsproxy.io/?url=';
+
+  // Multiple CORS proxies tried in order until one works
+  const PROXIES = [
+    url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url => `https://thingproxy.freeboard.io/fetch/${url}`,
+    url => `https://proxy.cors.sh/${url}`,
+  ];
 
   const keyInput = document.getElementById('api-key');
   const saved    = localStorage.getItem('reflect_api_key');
@@ -154,8 +161,19 @@
   keyInput.addEventListener('input', () =>
     localStorage.setItem('reflect_api_key', keyInput.value.trim()));
 
-  function proxyUrl(path) {
-    return PROXY + encodeURIComponent(REFLECT_API + path);
+  async function fetchWithProxy(path, headers) {
+    const targetUrl = REFLECT_API + path;
+    for (let i = 0; i < PROXIES.length; i++) {
+      const proxyUrl = PROXIES[i](targetUrl);
+      setStatus(`Trying proxy ${i + 1}/${PROXIES.length}…`, '');
+      try {
+        const res = await fetch(proxyUrl, { headers });
+        if (res.ok || res.status === 401 || res.status === 403) return res;
+      } catch (e) {
+        // try next proxy
+      }
+    }
+    throw new Error('All proxies failed. Check your internet connection or try again later.');
   }
 
   function highlight(json) {
@@ -199,7 +217,7 @@
     };
 
     try {
-      const res  = await fetch(proxyUrl('/cores'), { headers });
+      const res  = await fetchWithProxy('/cores', headers);
       const text = await res.text();
       let data;
 
