@@ -308,17 +308,6 @@
 </head>
 <body>
 
-<!-- ── Startup banner (shown when opened as file://) ── -->
-<div id="startup-banner">
-  <strong>&#9888; Proxy server not running</strong> — direct browser requests to reflect.qsc.com are blocked by CORS.<br>
-  To use this tool, run the proxy server on your computer:
-  <ol class="steps">
-    <li>Make sure <code>server.py</code> and <code>index.html</code> are in the same folder.</li>
-    <li>Open a terminal in that folder and run: <code>python3 server.py</code></li>
-    <li>Then open: <code>http://localhost:8080/index.html</code> &nbsp;(not the file directly)</li>
-  </ol>
-</div>
-
 <!-- ── Header ── -->
 <header>
   <h1>Q-SYS <span>Reflect API Explorer</span></h1>
@@ -401,15 +390,11 @@
 </main>
 
 <script>
-  // Show startup banner if opened as a file (not via proxy server)
-  const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  if (!isLocalServer) {
-    document.getElementById('startup-banner').style.display = 'block';
-  }
-
-  // Requests go to the local proxy server (avoids CORS).
-  // server.py forwards them to https://reflect.qsc.com/api/public/v0
-  const BASE_URL = isLocalServer ? '/proxy' : 'https://reflect.qsc.com/api/public/v0';
+  // Use corsproxy.io to bypass CORS — no local server needed.
+  // Requests: Browser → corsproxy.io → reflect.qsc.com
+  const REFLECT_API = 'https://reflect.qsc.com/api/public/v0';
+  const CORS_PROXY  = 'https://corsproxy.io/?url=';
+  const BASE_URL    = CORS_PROXY + encodeURIComponent(REFLECT_API);
 
   // Persist API key
   const keyInput  = document.getElementById('api-key');
@@ -472,7 +457,7 @@
     const method   = methodSel.value;
     const path     = document.getElementById('endpoint').value.trim() || '/';
     const bodyText = document.getElementById('req-body').value.trim();
-    const url      = BASE_URL + path;
+    const url      = CORS_PROXY + encodeURIComponent(REFLECT_API + path);
 
     const sendBtn  = document.getElementById('send-btn');
     const spinner  = document.getElementById('spinner');
