@@ -281,9 +281,43 @@
       font-size: .85rem;
       font-style: italic;
     }
+
+    /* startup banner */
+    #startup-banner {
+      display: none;
+      background: #1a1000;
+      border-bottom: 2px solid var(--accent);
+      padding: 14px 24px;
+      font-size: .88rem;
+      line-height: 1.7;
+      color: var(--yellow);
+    }
+    #startup-banner strong { color: var(--accent); font-size: 1rem; }
+    #startup-banner code {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: monospace;
+      color: var(--green);
+      font-size: .85rem;
+    }
+    #startup-banner .steps { margin-top: 8px; padding-left: 18px; }
+    #startup-banner .steps li { margin-bottom: 4px; }
   </style>
 </head>
 <body>
+
+<!-- ── Startup banner (shown when opened as file://) ── -->
+<div id="startup-banner">
+  <strong>&#9888; Proxy server not running</strong> — direct browser requests to reflect.qsc.com are blocked by CORS.<br>
+  To use this tool, run the proxy server on your computer:
+  <ol class="steps">
+    <li>Make sure <code>server.py</code> and <code>index.html</code> are in the same folder.</li>
+    <li>Open a terminal in that folder and run: <code>python3 server.py</code></li>
+    <li>Then open: <code>http://localhost:8080/index.html</code> &nbsp;(not the file directly)</li>
+  </ol>
+</div>
 
 <!-- ── Header ── -->
 <header>
@@ -367,11 +401,15 @@
 </main>
 
 <script>
+  // Show startup banner if opened as a file (not via proxy server)
+  const isLocalServer = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isLocalServer) {
+    document.getElementById('startup-banner').style.display = 'block';
+  }
+
   // Requests go to the local proxy server (avoids CORS).
   // server.py forwards them to https://reflect.qsc.com/api/public/v0
-  const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? '/proxy'
-    : 'https://reflect.qsc.com/api/public/v0';
+  const BASE_URL = isLocalServer ? '/proxy' : 'https://reflect.qsc.com/api/public/v0';
 
   // Persist API key
   const keyInput  = document.getElementById('api-key');
