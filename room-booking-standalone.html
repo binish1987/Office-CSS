@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1280, initial-scale=1.0" />
+  <title>Room Booking — Q-SYS Touch Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+/* ============================================================
+   Q-SYS Touch Panel — Room Booking UI
+   Target: 10" landscape panel (1280 × 800 typical)
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+:root {
+  --brand:          #e8610a;
+  --brand-dark:     #b84b00;
+  --available:      #00c471;
+  --available-dim:  #004d2c;
+  --occupied:       #e8610a;
+  --occupied-dim:   #4d1f00;
+  --soon:           #f5a623;
+  --soon-dim:       #4d3000;
+  --bg:             #0d0f14;
+  --surface:        #14181f;
+  --surface-2:      #1c2230;
+  --border:         #2a3345;
+  --border-light:   #3a4860;
+  --text-primary:   #f0f4ff;
+  --text-secondary: #8a9bc0;
+  --text-muted:     #4a5a7a;
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,.5);
+  --shadow-glow-avail: 0 0 40px rgba(0,196,113,.25);
+  --shadow-glow-occ:   0 0 40px rgba(232,97,10,.30);
+  --shadow-glow-soon:  0 0 40px rgba(245,166,35,.25);
+  --font: 'Inter','Segoe UI',system-ui,sans-serif;
+  --font-mono: 'JetBrains Mono','Fira Code','Consolas',monospace;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: var(--font);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* ── Layout ── */
+.panel {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 340px;
+  grid-template-areas: "header header" "main sidebar" "actions actions";
+  height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.panel-header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 24px;
+}
+.header-room { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.room-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.room-icon svg { width: 24px; height: 24px; fill: #fff; }
+.room-name {
+  font-size: 1.4rem; font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.room-floor { font-size: .8rem; color: var(--text-secondary); margin-top: 1px; letter-spacing: .03em; }
+.header-center { flex: 1; text-align: center; }
+.header-time {
+  font-size: 2.1rem; font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  letter-spacing: .04em; line-height: 1;
+}
+.header-date { font-size: .82rem; color: var(--text-secondary); margin-top: 4px; letter-spacing: .04em; }
+.header-meta { display: flex; align-items: center; gap: 12px; }
+.capacity-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 14px;
+  font-size: .8rem; color: var(--text-secondary);
+}
+.capacity-badge svg { width: 14px; height: 14px; fill: var(--text-secondary); }
+
+/* ── Main ── */
+.panel-main {
+  grid-area: main;
+  display: flex; flex-direction: column;
+  padding: 28px 28px 20px 32px;
+  gap: 20px; overflow: hidden;
+}
+
+/* ── Status card ── */
+.status-card {
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  display: flex; align-items: center; gap: 24px;
+  transition: box-shadow .4s ease, background .4s ease;
+}
+.status-card.available {
+  background: var(--available-dim);
+  border: 1.5px solid rgba(0,196,113,.35);
+  box-shadow: var(--shadow-glow-avail);
+}
+.status-card.occupied {
+  background: var(--occupied-dim);
+  border: 1.5px solid rgba(232,97,10,.35);
+  box-shadow: var(--shadow-glow-occ);
+}
+.status-card.soon {
+  background: var(--soon-dim);
+  border: 1.5px solid rgba(245,166,35,.35);
+  box-shadow: var(--shadow-glow-soon);
+}
+.status-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%; flex-shrink: 0;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+.status-card.available .status-dot { background: var(--available); }
+.status-card.occupied  .status-dot { background: var(--occupied); animation: none; }
+.status-card.soon      .status-dot { background: var(--soon); }
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(0,196,113,.5); }
+  70%  { box-shadow: 0 0 0 10px rgba(0,196,113,0);  }
+  100% { box-shadow: 0 0 0 0   rgba(0,196,113,.5); }
+}
+.status-text-group { flex: 1; }
+.status-label {
+  font-size: .72rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px;
+}
+.status-card.available .status-label { color: var(--available); }
+.status-card.occupied  .status-label { color: var(--occupied);  }
+.status-card.soon      .status-label { color: var(--soon);      }
+.status-title  { font-size: 1.65rem; font-weight: 800; color: var(--text-primary); line-height: 1.15; }
+.status-subtitle { font-size: .85rem; color: var(--text-secondary); margin-top: 4px; }
+.status-timer {
+  font-family: var(--font-mono);
+  font-size: 1.9rem; font-weight: 700;
+  letter-spacing: .04em; flex-shrink: 0;
+}
+.status-card.available .status-timer { color: var(--available); }
+.status-card.occupied  .status-timer { color: var(--occupied);  }
+.status-card.soon      .status-timer { color: var(--soon);      }
+
+/* ── Meeting card ── */
+.meeting-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 26px;
+  box-shadow: var(--shadow-card);
+}
+.meeting-card-label {
+  font-size: .7rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 12px;
+}
+.meeting-title {
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.meeting-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; }
+.meeting-meta-item { display: flex; align-items: center; gap: 6px; font-size: .82rem; color: var(--text-secondary); }
+.meeting-meta-item svg { width: 14px; height: 14px; fill: var(--text-muted); flex-shrink: 0; }
+.organizer-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--brand);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .6rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+/* ── Quick-book ── */
+.quick-book { display: flex; flex-direction: column; gap: 10px; }
+.quick-book-label {
+  font-size: .72rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 2px;
+}
+.quick-book-row { display: flex; gap: 10px; }
+.btn-quick {
+  flex: 1; padding: 16px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: var(--font); font-size: .9rem; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; line-height: 1.2;
+}
+.btn-quick .btn-duration { font-size: 1.25rem; font-weight: 800; color: var(--brand); }
+.btn-quick:hover  { background: var(--surface-2); border-color: var(--brand); }
+.btn-quick:active { transform: scale(.97); background: rgba(232,97,10,.12); }
+
+/* ── Actions bar ── */
+.panel-actions {
+  grid-area: actions;
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.btn-primary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 28px; border-radius: var(--radius-md);
+  border: none; background: var(--brand); color: #fff;
+  font-family: var(--font); font-size: .95rem; font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  white-space: nowrap;
+}
+.btn-primary svg { width: 18px; height: 18px; fill: #fff; }
+.btn-primary:hover  { background: var(--brand-dark); }
+.btn-primary:active { transform: scale(.97); }
+
+.btn-danger {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 28px; border-radius: var(--radius-md);
+  border: 1.5px solid rgba(232,97,10,.5);
+  background: rgba(232,97,10,.08); color: var(--occupied);
+  font-family: var(--font); font-size: .95rem; font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+  white-space: nowrap;
+}
+.btn-danger svg { width: 18px; height: 18px; fill: currentColor; }
+.btn-danger:hover  { background: rgba(232,97,10,.18); border-color: var(--occupied); }
+.btn-danger:active { transform: scale(.97); }
+
+.btn-ghost {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 22px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: transparent; color: var(--text-secondary);
+  font-family: var(--font); font-size: .9rem; font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  white-space: nowrap;
+}
+.btn-ghost svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--border-light); color: var(--text-primary); }
+.actions-spacer { flex: 1; }
+
+/* ── Sidebar ── */
+.panel-sidebar {
+  grid-area: sidebar;
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--surface); overflow: hidden;
+}
+.sidebar-section { padding: 20px 22px; border-bottom: 1px solid var(--border); }
+.sidebar-section:last-child { border-bottom: none; flex: 1; overflow-y: auto; }
+.sidebar-section-title {
+  font-size: .68rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 14px;
+}
+
+/* ── Timeline ── */
+.timeline { display: flex; flex-direction: column; position: relative; }
+.timeline-slot {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; position: relative;
+}
+.timeline-slot + .timeline-slot { border-top: 1px solid var(--border); }
+.timeline-time {
+  font-family: var(--font-mono); font-size: .72rem;
+  color: var(--text-muted); width: 44px; flex-shrink: 0;
+  padding-top: 2px; text-align: right;
+}
+.timeline-bar-wrap { flex: 1; }
+.timeline-event {
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  display: flex; flex-direction: column; gap: 2px;
+  position: relative; overflow: hidden;
+}
+.timeline-event::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: 4px 0 0 4px;
+}
+.timeline-event.ev-occupied {
+  background: rgba(232,97,10,.12);
+  border: 1px solid rgba(232,97,10,.2);
+}
+.timeline-event.ev-occupied::before { background: var(--occupied); }
+.timeline-event.ev-current {
+  background: rgba(232,97,10,.2);
+  border: 1px solid rgba(232,97,10,.4);
+}
+.timeline-event.ev-current::before { background: var(--occupied); }
+.timeline-event.ev-available {
+  background: rgba(0,196,113,.06);
+  border: 1px dashed rgba(0,196,113,.2);
+}
+.timeline-event.ev-available::before { background: var(--available); }
+.timeline-event-title { font-size: .78rem; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+.timeline-event.ev-available .timeline-event-title { color: var(--available); font-weight: 500; }
+.timeline-event-time { font-size: .68rem; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* ── Amenities ── */
+.amenities { display: flex; flex-wrap: wrap; gap: 6px; }
+.amenity-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 999px; padding: 5px 11px;
+  font-size: .72rem; color: var(--text-secondary);
+}
+.amenity-chip svg { width: 12px; height: 12px; fill: var(--text-muted); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 36px 40px; width: 480px; max-width: 90vw;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+  transform: translateY(12px) scale(.97);
+  transition: transform .2s;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-title { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+.modal-sub { font-size: .85rem; color: var(--text-secondary); margin-bottom: 28px; }
+.duration-picker {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 28px;
+}
+.duration-btn {
+  padding: 18px 10px; border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: var(--surface-2); color: var(--text-primary);
+  font-family: var(--font); font-size: .85rem; font-weight: 600;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: background .15s, border-color .15s;
+}
+.duration-btn .dur-num { font-size: 1.5rem; font-weight: 800; color: var(--brand); }
+.duration-btn.selected, .duration-btn:hover { border-color: var(--brand); background: rgba(232,97,10,.1); }
+.modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+/* ── Check-in banner ── */
+.checkin-banner {
+  background: linear-gradient(135deg, rgba(245,166,35,.15), rgba(245,166,35,.05));
+  border: 1.5px solid rgba(245,166,35,.4);
+  border-radius: var(--radius-lg);
+  padding: 16px 22px;
+  display: flex; align-items: center; gap: 16px;
+}
+.checkin-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  background: rgba(245,166,35,.15);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.checkin-icon svg { width: 20px; height: 20px; fill: var(--soon); }
+.checkin-text { flex: 1; }
+.checkin-title { font-size: .88rem; font-weight: 700; color: var(--soon); margin-bottom: 2px; }
+.checkin-sub { font-size: .75rem; color: var(--text-secondary); }
+
+/* ── Scrollbar ── */
+.panel-sidebar ::-webkit-scrollbar { width: 4px; }
+.panel-sidebar ::-webkit-scrollbar-track { background: transparent; }
+.panel-sidebar ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .panel { grid-template-columns: 1fr 300px; }
+  .header-time { font-size: 1.8rem; }
+  .status-title { font-size: 1.4rem; }
+}
+@media (max-width: 700px) {
+  .panel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-areas: "header" "main" "sidebar" "actions";
+  }
+  .panel-sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 260px; }
+  .panel-header  { padding: 14px 18px; }
+  .panel-main    { padding: 16px; }
+  .panel-actions { padding: 12px 16px; flex-wrap: wrap; }
+  .header-time   { font-size: 1.55rem; }
+  .status-title  { font-size: 1.2rem; }
+  .status-timer  { font-size: 1.5rem; }
+}
+
+.hidden  { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="panel" id="panel">
+
+  <!-- HEADER -->
+  <header class="panel-header">
+    <div class="header-room">
+      <div class="room-icon">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h2v-2H5V5h14v14h-2v2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 3a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3zm0 8c2.67 0 8 1.34 8 4v1H4v-1c0-2.66 5.33-4 8-4z"/></svg>
+      </div>
+      <div>
+        <div class="room-name">Boardroom A</div>
+        <div class="room-floor">Level 3 · East Wing</div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="header-time" id="clock">--:--</div>
+      <div class="header-date" id="date-display">Loading…</div>
+    </div>
+
+    <div class="header-meta">
+      <div class="capacity-badge">
+        <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        10 people
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="panel-main">
+
+    <div class="status-card available" id="status-card">
+      <div class="status-dot"></div>
+      <div class="status-text-group">
+        <div class="status-label"   id="status-label">Available</div>
+        <div class="status-title"   id="status-title">Room is free</div>
+        <div class="status-subtitle" id="status-subtitle">Next meeting at 14:00</div>
+      </div>
+      <div class="status-timer" id="status-timer">1h 24m</div>
+    </div>
+
+    <div class="checkin-banner hidden" id="checkin-banner">
+      <div class="checkin-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+      </div>
+      <div class="checkin-text">
+        <div class="checkin-title">Check-in required</div>
+        <div class="checkin-sub">Please check in or the room will be released in <span id="checkin-countdown">5:00</span></div>
+      </div>
+      <button class="btn-primary" onclick="doCheckin()">Check In</button>
+    </div>
+
+    <div class="meeting-card">
+      <div class="meeting-card-label" id="meeting-card-label">Current Meeting</div>
+      <div class="meeting-title"      id="meeting-title">Q3 Budget Review &amp; Planning Session</div>
+      <div class="meeting-meta">
+        <div class="meeting-meta-item">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+          <span id="meeting-time">12:30 – 14:00</span>
+        </div>
+        <div class="meeting-meta-item">
+          <div class="organizer-avatar" id="organizer-initials">JD</div>
+          <span id="meeting-organizer">Jane Doe</span>
+        </div>
+        <div class="meeting-meta-item">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span id="meeting-attendees">6 attendees</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-book" id="quick-book">
+      <div class="quick-book-label">Book this room instantly</div>
+      <div class="quick-book-row">
+        <button class="btn-quick" onclick="quickBook(15)"><span class="btn-duration">15</span>min</button>
+        <button class="btn-quick" onclick="quickBook(30)"><span class="btn-duration">30</span>min</button>
+        <button class="btn-quick" onclick="quickBook(60)"><span class="btn-duration">60</span>min</button>
+        <button class="btn-quick" onclick="quickBook(90)"><span class="btn-duration">90</span>min</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- SIDEBAR -->
+  <aside class="panel-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Amenities</div>
+      <div class="amenities">
+        <div class="amenity-chip">
+          <svg viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
+          Coffee
+        </div>
+        <div class="amenity-chip">
+          <svg viewBox="0 0 24 24"><path d="M21 3H3v18l4-4h14V3zm-2 11H6.83l-1.17 1.17V5h15v9z"/></svg>
+          Video Conf
+        </div>
+        <div class="amenity-chip">
+          <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 0 0-6 0zm-4-4 2 2a7.074 7.074 0 0 1 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+          WiFi
+        </div>
+        <div class="amenity-chip">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          Whiteboard
+        </div>
+        <div class="amenity-chip">
+          <svg viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z"/></svg>
+          HDMI / USB-C
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Today's Schedule</div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </aside>
+
+  <!-- ACTIONS -->
+  <footer class="panel-actions">
+    <button class="btn-primary" id="btn-book" onclick="openBookModal()">
+      <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/></svg>
+      Book Room
+    </button>
+
+    <button class="btn-danger hidden" id="btn-end" onclick="endMeeting()">
+      <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+      End Meeting
+    </button>
+
+    <button class="btn-ghost" id="btn-extend" onclick="openExtendModal()">
+      <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      Extend
+    </button>
+
+    <div class="actions-spacer"></div>
+
+    <button class="btn-ghost" onclick="cycleState()" title="Demo: cycle states">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Demo
+    </button>
+  </footer>
+
+</div><!-- /.panel -->
+
+<!-- BOOK MODAL -->
+<div class="modal-overlay" id="book-modal">
+  <div class="modal">
+    <div class="modal-title">Book Boardroom A</div>
+    <div class="modal-sub">Select a duration — booking starts now</div>
+    <div class="duration-picker">
+      <button class="duration-btn selected" onclick="selectDuration(this,15)"><span class="dur-num">15</span>min</button>
+      <button class="duration-btn" onclick="selectDuration(this,30)"><span class="dur-num">30</span>min</button>
+      <button class="duration-btn" onclick="selectDuration(this,60)"><span class="dur-num">60</span>min</button>
+      <button class="duration-btn" onclick="selectDuration(this,90)"><span class="dur-num">90</span>min</button>
+      <button class="duration-btn" onclick="selectDuration(this,120)"><span class="dur-num">2</span>hrs</button>
+      <button class="duration-btn" onclick="selectDuration(this,180)"><span class="dur-num">3</span>hrs</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('book-modal')">Cancel</button>
+      <button class="btn-primary" onclick="confirmBook()">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTEND MODAL -->
+<div class="modal-overlay" id="extend-modal">
+  <div class="modal">
+    <div class="modal-title">Extend Meeting</div>
+    <div class="modal-sub">How much extra time do you need?</div>
+    <div class="duration-picker">
+      <button class="duration-btn selected" onclick="selectDuration(this,15)"><span class="dur-num">+15</span>min</button>
+      <button class="duration-btn" onclick="selectDuration(this,30)"><span class="dur-num">+30</span>min</button>
+      <button class="duration-btn" onclick="selectDuration(this,60)"><span class="dur-num">+60</span>min</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('extend-modal')">Cancel</button>
+      <button class="btn-primary" onclick="confirmExtend()">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Extend
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Demo states ── */
+  const STATES = ['available','occupied','soon'];
+  let stateIdx = 1;
+
+  const DEMO = {
+    available: {
+      card:'available', label:'Available', title:'Room is free',
+      subtitle:'Next meeting at 14:00', timer:'1h 24m',
+      meetingLabel:'Upcoming Meeting', meetingTitle:'Marketing Sync',
+      meetingTime:'14:00 – 14:30', organizer:'Ali Hassan', initials:'AH',
+      attendees:'4 attendees', showBook:true, showEnd:false,
+    },
+    occupied: {
+      card:'occupied', label:'Occupied', title:'In Use',
+      subtitle:'Ends at 14:00 · 24 min remaining', timer:'24m',
+      meetingLabel:'Current Meeting', meetingTitle:'Q3 Budget Review & Planning Session',
+      meetingTime:'12:30 – 14:00', organizer:'Jane Doe', initials:'JD',
+      attendees:'6 attendees', showBook:false, showEnd:true,
+    },
+    soon: {
+      card:'soon', label:'Starting Soon', title:'Meeting in 8 min',
+      subtitle:'Please wrap up — next booking at 13:00', timer:'8m',
+      meetingLabel:'Next Meeting', meetingTitle:'Design Review — Sprint 24',
+      meetingTime:'13:00 – 14:00', organizer:'Priya Sharma', initials:'PS',
+      attendees:'8 attendees', showBook:false, showEnd:false,
+    },
+  };
+
+  function applyState(key) {
+    const d = DEMO[key];
+    const sc = document.getElementById('status-card');
+    sc.className = `status-card ${d.card}`;
+    document.getElementById('status-label').textContent    = d.label;
+    document.getElementById('status-title').textContent    = d.title;
+    document.getElementById('status-subtitle').textContent = d.subtitle;
+    document.getElementById('status-timer').textContent    = d.timer;
+    document.getElementById('meeting-card-label').textContent = d.meetingLabel;
+    document.getElementById('meeting-title').textContent      = d.meetingTitle;
+    document.getElementById('meeting-time').textContent       = d.meetingTime;
+    document.getElementById('meeting-organizer').textContent  = d.organizer;
+    document.getElementById('organizer-initials').textContent = d.initials;
+    document.getElementById('meeting-attendees').textContent  = d.attendees;
+    toggle('quick-book', d.showBook);
+    toggle('btn-book',   d.showBook);
+    toggle('btn-end',   !d.showBook && d.showEnd);
+    toggle('btn-extend', d.showEnd);
+    toggle('checkin-banner', key === 'soon');
+  }
+
+  function toggle(id, show) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    show ? el.classList.remove('hidden') : el.classList.add('hidden');
+  }
+
+  function cycleState() {
+    stateIdx = (stateIdx + 1) % STATES.length;
+    applyState(STATES[stateIdx]);
+  }
+
+  applyState('occupied');
+
+  /* ── Clock ── */
+  function updateClock() {
+    const now = new Date();
+    const hh  = String(now.getHours()).padStart(2,'0');
+    const mm  = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${hh}:${mm}`;
+    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('date-display').textContent =
+      `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()} ${now.getFullYear()}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* ── Timeline ── */
+  const schedule = [
+    { time:'08:00', end:'09:00', title:'Leadership Stand-up', type:'occupied'  },
+    { time:'09:00', end:'11:00', title:'Available',            type:'available' },
+    { time:'11:00', end:'12:30', title:'Product Roadmap',      type:'occupied'  },
+    { time:'12:30', end:'14:00', title:'Q3 Budget Review',     type:'current'   },
+    { time:'14:00', end:'14:30', title:'Marketing Sync',       type:'occupied'  },
+    { time:'14:30', end:'16:00', title:'Available',            type:'available' },
+    { time:'16:00', end:'17:30', title:'All-Hands',            type:'occupied'  },
+  ];
+
+  const tl = document.getElementById('timeline');
+  schedule.forEach(s => {
+    const cls = s.type === 'current' ? 'ev-current'
+              : s.type === 'available' ? 'ev-available' : 'ev-occupied';
+    tl.innerHTML += `
+      <div class="timeline-slot">
+        <div class="timeline-time">${s.time}</div>
+        <div class="timeline-bar-wrap">
+          <div class="timeline-event ${cls}">
+            <div class="timeline-event-title">${s.title}</div>
+            <div class="timeline-event-time">${s.time} – ${s.end}</div>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  /* ── Modals ── */
+  let selectedDuration = 15;
+  function openBookModal()   { document.getElementById('book-modal').classList.add('open'); }
+  function openExtendModal() { document.getElementById('extend-modal').classList.add('open'); }
+  function closeModal(id)    { document.getElementById(id).classList.remove('open'); }
+
+  function selectDuration(btn, mins) {
+    btn.closest('.duration-picker').querySelectorAll('.duration-btn')
+       .forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedDuration = mins;
+  }
+
+  function confirmBook()   { closeModal('book-modal');   applyState('occupied'); stateIdx = 1; }
+  function confirmExtend() { closeModal('extend-modal'); }
+  function quickBook(mins) { selectedDuration = mins; confirmBook(); }
+  function endMeeting()    { applyState('available'); stateIdx = 0; }
+  function doCheckin()     { document.getElementById('checkin-banner').classList.add('hidden'); applyState('occupied'); stateIdx = 1; }
+
+  document.querySelectorAll('.modal-overlay').forEach(ov => {
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+  });
+</script>
+</body>
+</html>
